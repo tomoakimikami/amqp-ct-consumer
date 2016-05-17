@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Calendar;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
 
 import spring.support.amqp.rabbit.ExactlyOnceDeliveryAdvice.ExactlyOnceDelivery;
 import spring.support.amqp.rabbit.ExactlyOnceDeliveryProducer;
@@ -29,6 +30,8 @@ public class ConsumerServiceImpl implements ConsumerService {
    */
   @Autowired
   private RabbitMqReservationRepository reservationRepository;
+
+  private Random random = new Random();
 
   /**
    * {@inheritDoc}.
@@ -47,5 +50,9 @@ public class ConsumerServiceImpl implements ConsumerService {
     reservation.setName(data.getName());
     reservation.setReservedAt(Calendar.getInstance().getTime());
     reservationRepository.save(reservation);
+    // 半分エラーにしてDLQへ飛ばしてみる
+    if (random.nextBoolean()) {
+      throw new IllegalArgumentException("Moved to DLQ");
+    }
   }
 }
